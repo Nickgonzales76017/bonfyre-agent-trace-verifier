@@ -1,0 +1,67 @@
+name: Bonfyre Agent Trace Verifier
+description: Deterministically gate governed agent traces across eight separate safety and quality dimensions.
+author: Bonfyre
+branding:
+  icon: shield
+  color: orange
+inputs:
+  trace-path:
+    description: Repository-relative or absolute path to the JSON trace.
+    required: true
+  receipt-path:
+    description: Path where the JSON verification receipt will be written.
+    required: false
+    default: bonfyre-agent-trace-receipt.json
+outputs:
+  passed:
+    description: Whether every verification dimension passed.
+    value: ${{ steps.verify.outputs.passed }}
+  receipt-id:
+    description: Content-addressed verification receipt identifier.
+    value: ${{ steps.verify.outputs.receipt-id }}
+  trace-digest:
+    description: SHA-256 digest of the canonical input trace.
+    value: ${{ steps.verify.outputs.trace-digest }}
+  receipt-path:
+    description: Path to the generated JSON receipt.
+    value: ${{ steps.verify.outputs.receipt-path }}
+runs:
+  using: composite
+  steps:
+    - id: verify
+      shell: bash
+      env:
+        BONFYRE_TRACE_PATH: ${{ inputs.trace-path }}
+        BONFYRE_RECEIPT_PATH: ${{ inputs.receipt-path }}
+      run: |
+        set +e
+        python3 "$GITHUB_ACTION_PATH/verifier.py" "$BONFYRE_TRACE_PATH" --output "$BONFYRE_RECEIPT_PATH"
+        verification_status=$?
+        set -e
+
+        if [[ -f "$BONFYRE_RECEIPT_PATH" ]]; then
+          python3 - "$BONFYRE_RECEIPT_PATH" "$GITHUB_OUTPUT" <<'PY'
+        import json
+        import pathlib
+        import sys
+
+        receipt_path = pathlib.Path(sys.argv[1])
+        output_path = pathlib.Path(sys.argv[2])
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        with output_path.open("a", encoding="utf-8") as output:
+            output.write(f"passed={str(receipt['passed']).lower()}\n")
+            output.write(f"receipt-id={receipt['receipt_id']}\n")
+            output.write(f"trace-digest={receipt['trace_digest_sha256']}\n")
+            output.write(f"receipt-path={receipt_path.resolve()}\n")
+        PY
+          cat "$BONFYRE_RECEIPT_PATH"
+        else
+          {
+            echo "passed=false"
+            echo "receipt-id="
+            echo "trace-digest="
+            echo "receipt-path="
+          } >> "$GITHUB_OUTPUT"
+        fi
+
+        exit "$verification_status"
