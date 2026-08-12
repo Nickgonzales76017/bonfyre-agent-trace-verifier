@@ -1,0 +1,77 @@
+name: Agent Workflow Safety Audit
+description: Request fit and scope confirmation for the fixed-price USD 1,500 audit.
+title: "Agent Workflow Safety Audit: "
+labels:
+  - commercial-audit
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This intake is for one workflow and one integration target at a fixed asking price of USD 1,500. It confirms fit and scope only. Do not include credentials, private traces, customer data, or other sensitive material.
+  - type: input
+    id: organization
+    attributes:
+      label: Organization or project
+      description: A public name or repository is sufficient.
+      placeholder: Example project or organization
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow to audit
+      description: Describe the single agent workflow and its intended outcome.
+      placeholder: The agent reads a support ticket, proposes a resolution, requests approval, and closes the ticket.
+    validations:
+      required: true
+  - type: dropdown
+    id: trace_source
+    attributes:
+      label: Available trace source
+      options:
+        - JSON or JSONL events
+        - OpenTelemetry or OpenInference
+        - Provider-specific trace export
+        - Application database records
+        - Logs only
+        - No trace export yet
+    validations:
+      required: true
+  - type: textarea
+    id: effects
+    attributes:
+      label: Effects and authority boundary
+      description: List the actions that change external state and who may approve or execute them.
+      placeholder: Sending messages requires an assigned grant; issuing refunds also requires named reviewer approval.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance target
+      description: State what the audit must prove or expose for this workflow.
+      placeholder: CI must fail when an unapproved refund is attempted and emit a deterministic receipt.
+    validations:
+      required: true
+  - type: dropdown
+    id: integration
+    attributes:
+      label: Integration target
+      options:
+        - CI or release gate
+        - Agent runtime
+        - Evaluation harness
+        - Workflow application
+        - Evidence or audit store
+        - Other single target
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Submission boundaries
+      options:
+        - label: I have not included credentials, private traces, customer data, or other sensitive material.
+          required: true
+        - label: I understand that USD 1,500 is an asking price and work begins only after scope, availability, delivery terms, and payment method are explicitly agreed.
+          required: true

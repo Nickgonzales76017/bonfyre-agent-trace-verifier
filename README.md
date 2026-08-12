@@ -37,7 +37,7 @@ The receipt is plain JSON and can be stored beside an agent trajectory, used as 
 
 The CLI is MIT licensed. Bonfyre offers a bounded **Agent Workflow Safety Audit** for teams that want their own trace schema, authority model, effect taxonomy, replay checks, and CI integration mapped into this verifier. The initial audit is offered at **$1,500 USD** for one workflow and one integration target; scope and availability are confirmed before work begins.
 
-Contact: open a GitHub issue in this repository with the title `Agent Workflow Safety Audit` and no sensitive data.
+Start with the structured [Agent Workflow Safety Audit intake](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/issues/new?template=agent-workflow-safety-audit.yml). Do not include credentials, private traces, customer data, or other sensitive material. The intake confirms fit and scope only; no work or payment is accepted until both sides agree on the delivery boundary.
 
 ## Limits
 
