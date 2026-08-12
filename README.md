@@ -23,6 +23,26 @@ python3 -m unittest discover -s tests -v
 
 Passing traces exit `0`, policy failures exit `1`, and malformed inputs exit `2`.
 
+## Use in GitHub Actions
+
+Pin the action to a release and pass the repository-relative path to a trace:
+
+```yaml
+- name: Verify governed agent trace
+  id: agent-trace
+  uses: Nickgonzales76017/bonfyre-agent-trace-verifier@v1.2.0
+  with:
+    trace-path: artifacts/agent-trace.json
+
+- name: Preserve verification receipt
+  uses: actions/upload-artifact@v4
+  with:
+    name: agent-trace-receipt
+    path: ${{ steps.agent-trace.outputs.receipt-path }}
+```
+
+The step fails for policy violations or malformed input. It exposes `passed`, `receipt-id`, `trace-digest`, and `receipt-path` outputs for later CI steps. The action invokes the same standard-library verifier and makes no network calls.
+
 ## Trace contract
 
 Each trace declares the task envelope, policy, ordered events, and observed outcomes. Effects are explicit. Review-gated effects need an approved named reviewer. Each action must use an authority grant assigned to its actor. Required evidence is attached to the event that produced it. Failed mutating effects require a later successful compensation event.
@@ -31,7 +51,7 @@ See [`examples/pass.json`](examples/pass.json) for the complete minimal contract
 
 ## Integration
 
-The receipt is plain JSON and can be stored beside an agent trajectory, used as a CI gate, or projected into an evaluation system. It is intentionally runtime-neutral: the events can originate in Frappe, browser automation, API agents, durable workflows, or a custom environment.
+The receipt is plain JSON and can be stored beside an agent trajectory, used as a CI gate, or projected into an evaluation system. It is intentionally runtime-neutral: the events can originate in business applications, browser automation, API agents, durable workflows, or a custom environment.
 
 ## Commercial use
 

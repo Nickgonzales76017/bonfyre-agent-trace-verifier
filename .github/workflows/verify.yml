@@ -1,0 +1,32 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Exercise local composite action
+        id: trace
+        uses: ./
+        with:
+          trace-path: examples/pass.json
+      - name: Check action outputs
+        env:
+          PASSED: ${{ steps.trace.outputs.passed }}
+          RECEIPT_ID: ${{ steps.trace.outputs.receipt-id }}
+          TRACE_DIGEST: ${{ steps.trace.outputs.trace-digest }}
+          RECEIPT_PATH: ${{ steps.trace.outputs.receipt-path }}
+        run: |
+          test "$PASSED" = "true"
+          test "${RECEIPT_ID#bfv_}" != "$RECEIPT_ID"
+          test "${#TRACE_DIGEST}" -eq 64
+          test -f "$RECEIPT_PATH"
