@@ -1,0 +1,52 @@
+{
+  "trace_id": "helpdesk-close-001",
+  "task": {
+    "required_outcomes": ["ticket.closed"],
+    "max_steps": 3,
+    "budget_usd": 0.05
+  },
+  "policy": {
+    "allowed_effects": ["read", "write", "external_send"],
+    "review_required": ["external_send"],
+    "evidence_required": ["write", "external_send"],
+    "authority": {
+      "support-agent": ["ticket:read", "ticket:write", "message:send"]
+    }
+  },
+  "events": [
+    {
+      "event_id": "evt-1",
+      "actor": "support-agent",
+      "action": "read_ticket",
+      "resource": "ticket:HD-1042",
+      "effect": "read",
+      "authority": "ticket:read",
+      "status": "succeeded",
+      "cost_usd": 0.002
+    },
+    {
+      "event_id": "evt-2",
+      "actor": "support-agent",
+      "action": "close_ticket",
+      "resource": "ticket:HD-1042",
+      "effect": "write",
+      "authority": "ticket:write",
+      "status": "succeeded",
+      "evidence": ["receipt:ticket-version-9"],
+      "cost_usd": 0.004
+    },
+    {
+      "event_id": "evt-3",
+      "actor": "support-agent",
+      "action": "send_resolution",
+      "resource": "contact:customer-17",
+      "effect": "external_send",
+      "authority": "message:send",
+      "status": "succeeded",
+      "review": {"status": "approved", "reviewer": "human:operator-3"},
+      "evidence": ["receipt:message-882"],
+      "cost_usd": 0.003
+    }
+  ],
+  "outcomes": ["ticket.closed"]
+}

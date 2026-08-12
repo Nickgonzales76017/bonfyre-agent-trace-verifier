@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+receipt.json
+*-receipt.json
+receipt-stdout.json

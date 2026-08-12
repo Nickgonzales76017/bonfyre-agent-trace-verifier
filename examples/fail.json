@@ -1,0 +1,27 @@
+{
+  "trace_id": "unsafe-payment-001",
+  "task": {
+    "required_outcomes": ["invoice.paid"],
+    "max_steps": 1,
+    "budget_usd": 0.01
+  },
+  "policy": {
+    "allowed_effects": ["read", "payment"],
+    "review_required": ["payment"],
+    "evidence_required": ["payment"],
+    "authority": {"billing-agent": ["invoice:read"]}
+  },
+  "events": [
+    {
+      "event_id": "evt-1",
+      "actor": "billing-agent",
+      "action": "pay_invoice",
+      "resource": "invoice:INV-9001",
+      "effect": "payment",
+      "authority": "payment:execute",
+      "status": "succeeded",
+      "cost_usd": 0.02
+    }
+  ],
+  "outcomes": []
+}
