@@ -60,3 +60,27 @@ independently of this implementation.
 ## Upstream
 
 Filed with the OASIS SARIF TC for consideration in SARIF 2.2.
+
+## Multi-script scale of the divergence
+
+`multiscript_fixtures.py` measures how far apart the NFC and NFD forms of a
+realistic filename are after the RFC 3987 mapping, per writing system:
+
+| script | percent-encoded NFC | percent-encoded NFD | differs |
+| --- | --- | --- | --- |
+| Latin / German | 32 | 34 | yes |
+| Latin / Vietnamese | 47 | 59 | yes |
+| Korean / Hangul | 59 | 131 | yes |
+| Japanese kana with dakuten | 95 | 185 | yes |
+| Devanagari / Hindi | 113 | 113 | no |
+| Arabic | 59 | 59 | no |
+
+8 of 10 scripts tested produce two different conformant URIs. Korean is the
+worst case: every syllable decomposes, so the two encodings of the same
+filename share no prefix beyond the scheme and differ by more than 2x in
+length.
+
+The two scripts that coincide are not safe cases — those particular characters
+simply have no canonical decomposition. A producer cannot know in advance which
+inputs are affected, which is the argument for putting the constraint in the
+spec rather than leaving it to per-tool judgement.
