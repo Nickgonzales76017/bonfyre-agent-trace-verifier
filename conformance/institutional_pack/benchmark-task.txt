@@ -1,0 +1,1 @@
+Verify a governed agent trace without exposing credential-shaped evidence.

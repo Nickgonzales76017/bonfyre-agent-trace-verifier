@@ -1,0 +1,41 @@
+{
+  "schema_version": "aurekai.habitat.public.v1",
+  "generated_from": "real external episode state",
+  "federation_boundary": "public",
+  "rooms": [
+    {
+      "id": "bernstein-secret-safe-evidence-lab",
+      "title": "Bernstein Secret-safe Evidence Lab",
+      "status": "pr_open_ci_green_review_pending",
+      "source": "https://github.com/sipyourdrink-ltd/bernstein/pull/3734",
+      "ports": [
+        {"kind":"view_evidence","href":"https://github.com/sipyourdrink-ltd/bernstein/pull/3734"},
+        {"kind":"join_review","href":"https://github.com/sipyourdrink-ltd/bernstein/pull/3734/files"}
+      ],
+      "asset_passport": {"mode":"reference","license":"upstream-repository-terms","contains_credentials":false}
+    },
+    {
+      "id": "cross-standard-conformance-hall",
+      "title": "OpenTelemetry / OpenSSF / SPDX / Sigstore / SLSA Conformance Hall",
+      "status": "runnable_public_artifact",
+      "source": "conformance/institutional_pack/standards-lock.json",
+      "ports": [
+        {"kind":"run_reproduction","href":"conformance/institutional_pack/validate.py"},
+        {"kind":"view_evidence","href":"conformance/institutional_pack/README.md"}
+      ],
+      "asset_passport": {"mode":"copy","license":"MIT","contains_credentials":false}
+    },
+    {
+      "id": "secret-safe-audit-write-arena",
+      "title": "Secret-safe Audit Write Benchmark Arena",
+      "status": "task_and_provenance_runnable_signature_pending",
+      "source": "https://github.com/sipyourdrink-ltd/bernstein/issues/3700",
+      "ports": [
+        {"kind":"run_reproduction","href":"conformance/institutional_pack/benchmark-task.txt"},
+        {"kind":"view_provenance","href":"conformance/institutional_pack/slsa-provenance.json"},
+        {"kind":"verify_signature_policy","href":"conformance/institutional_pack/sigstore-policy.json"}
+      ],
+      "asset_passport": {"mode":"copy","license":"MIT","contains_credentials":false}
+    }
+  ]
+}

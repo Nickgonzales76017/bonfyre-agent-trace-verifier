@@ -13,6 +13,14 @@ A small, deterministic verifier for governed agent execution traces. It keeps ei
 
 The verifier uses only the Python standard library, performs no network calls, and emits a content-addressed JSON receipt. The same trace always produces the same digest and receipt ID.
 
+## Institutional conformance pack
+
+The runnable [institutional conformance pack](conformance/institutional_pack/README.md)
+maps one real secret-safe evidence episode across OpenTelemetry GenAI, OpenSSF
+OSPS, SPDX 3.0.1, Sigstore, and SLSA v1.2. It also emits three source-backed
+Aurekai Commons rooms. The report keeps failed and unverified controls visible;
+it does not claim standards-body certification.
+
 ## Identity continuity
 
 The digest is an **identity**, not a checksum over an accident of transport. Two runs of the same agent recorded on different machines describe the same execution, and they must produce the same digest.

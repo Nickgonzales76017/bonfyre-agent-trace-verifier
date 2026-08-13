@@ -1,0 +1,5 @@
+{
+  "claimedBuildLevel": 1,
+  "signed": false,
+  "note": "Subject and build expectations are verifiable; authenticity is not asserted until a trusted build platform signs the envelope."
+}

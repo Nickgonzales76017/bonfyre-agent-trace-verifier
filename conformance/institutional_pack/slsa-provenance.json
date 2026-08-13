@@ -1,0 +1,37 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "conformance/institutional_pack/benchmark-task.txt",
+      "digest": {
+        "sha256": "1f6550615624fa74ac74b6d3fb69e0aa9c947323b8eebf49a16d0d812209a57f"
+      }
+    }
+  ],
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/benchmark-pack/v1",
+      "externalParameters": {
+        "task": "secret-safe-audit-write"
+      },
+      "systemParameters": {},
+      "resolvedDependencies": [
+        {
+          "uri": "https://github.com/sipyourdrink-ltd/bernstein/pull/3734",
+          "digest": {
+            "gitCommit": "aa6100f29f165662c8e7a440c01d8797ad1373bf"
+          }
+        }
+      ]
+    },
+    "runDetails": {
+      "builder": {
+        "id": "https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/manual-benchmark-builder/v1"
+      },
+      "metadata": {
+        "invocationId": "run6-run4-supercycle7-20260813"
+      }
+    }
+  }
+}

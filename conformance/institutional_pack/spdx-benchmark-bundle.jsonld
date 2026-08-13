@@ -1,0 +1,15 @@
+{
+  "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+  "@graph": [
+    {
+      "type": "SpdxDocument",
+      "spdxId": "https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier#SPDXRef-DOCUMENT",
+      "name": "Secret-safe audit-write benchmark bundle"
+    },
+    {
+      "type": "software_File",
+      "spdxId": "https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier#SPDXRef-BENCHMARK-TASK",
+      "name": "benchmark-task.txt"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "content_capture_opt_in": false,
+  "episode": "https://github.com/sipyourdrink-ltd/bernstein/pull/3734",
+  "resource": {
+    "service.name": "bonfyre-agent-trace-verifier",
+    "service.version": "1.2.0"
+  },
+  "spans": [
+    {
+      "name": "invoke_agent verifier",
+      "kind": "INTERNAL",
+      "attributes": {
+        "gen_ai.operation.name": "invoke_agent",
+        "gen_ai.agent.id": "BonfyreProof",
+        "gen_ai.agent.name": "verifier",
+        "gen_ai.agent.version": "1.2.0",
+        "gen_ai.conversation.id": "bernstein-pr-3734"
+      }
+    },
+    {
+      "name": "execute_tool BonfyreProof",
+      "kind": "INTERNAL",
+      "attributes": {
+        "gen_ai.operation.name": "execute_tool",
+        "gen_ai.tool.name": "BonfyreProof",
+        "gen_ai.tool.type": "function",
+        "gen_ai.tool.call.id": "bfv-secret-safe-audit-write"
+      }
+    },
+    {
+      "name": "chat gpt-5",
+      "kind": "CLIENT",
+      "attributes": {
+        "gen_ai.operation.name": "chat",
+        "gen_ai.provider.name": "openai",
+        "gen_ai.request.model": "gpt-5",
+        "gen_ai.response.model": "gpt-5",
+        "gen_ai.usage.input_tokens": 128,
+        "gen_ai.usage.output_tokens": 32
+      }
+    }
+  ]
+}
