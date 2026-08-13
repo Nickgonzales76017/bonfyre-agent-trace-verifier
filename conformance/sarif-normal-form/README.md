@@ -63,8 +63,8 @@ Filed with the OASIS SARIF TC for consideration in SARIF 2.2.
 
 ## Multi-script scale of the divergence
 
-`multiscript_fixtures.py` measures how far apart the NFC and NFD forms of a
-realistic filename are after the RFC 3987 mapping, per writing system:
+`multiscript_fixtures.py` measures how far apart the NFC and NFD forms of ten
+realistic filename fixtures are after the RFC 3987 mapping:
 
 | script | percent-encoded NFC | percent-encoded NFD | differs |
 | --- | --- | --- | --- |
@@ -75,12 +75,14 @@ realistic filename are after the RFC 3987 mapping, per writing system:
 | Devanagari / Hindi | 113 | 113 | no |
 | Arabic | 59 | 59 | no |
 
-8 of 10 scripts tested produce two different conformant URIs. Korean is the
+8 of 10 fixtures tested produce two different conformant URIs. The fixtures
+span seven writing systems, with four language-specific Latin examples. Korean is the
 worst case: every syllable decomposes, so the two encodings of the same
-filename share no prefix beyond the scheme and differ by more than 2x in
+filename diverge at the first encoded byte and differ by more than 2x in
 length.
 
-The two scripts that coincide are not safe cases — those particular characters
-simply have no canonical decomposition. A producer cannot know in advance which
-inputs are affected, which is the argument for putting the constraint in the
-spec rather than leaving it to per-tool judgement.
+The two fixtures that coincide are not generally safe cases. This Arabic
+fixture has no canonically decomposable characters. The Devanagari fixture does
+contain a decomposable sequence (U+095E -> U+092B U+093C), but U+095E is
+composition-excluded, so NFC retains the decomposed sequence. Producers still
+need one deterministic policy rather than per-input judgement.

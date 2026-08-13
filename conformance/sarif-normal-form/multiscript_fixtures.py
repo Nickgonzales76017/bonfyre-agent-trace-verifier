@@ -4,7 +4,7 @@
 Companion to repro_normal_form_fingerprints.py. Standard library only.
 
 The single-character "sör.txt" case is the smallest demonstration, but it
-understates the problem. This table measures, per writing system, how far apart
+understates the problem. This table measures, per filename fixture, how far apart
 the NFC and NFD forms of a realistic filename actually are after the RFC 3987
 IRI-to-URI mapping that SARIF requires.
 
@@ -43,7 +43,7 @@ def enc(s: str) -> str:
 def main() -> int:
     print("Divergence between NFC and NFD forms after the RFC 3987 mapping")
     print("=" * 78)
-    print(f"{'script':<32}{'cp NFC':>7}{'cp NFD':>7}{'enc NFC':>9}{'enc NFD':>9}  differs")
+    print(f"{'fixture':<32}{'cp NFC':>7}{'cp NFD':>7}{'enc NFC':>9}{'enc NFD':>9}  differs")
     print("-" * 78)
 
     diverging = 0
@@ -56,7 +56,7 @@ def main() -> int:
         print(f"{label:<32}{len(nfc):>7}{len(nfd):>7}{len(e_nfc):>9}{len(e_nfd):>9}  {'YES' if differs else 'no'}")
 
     print("-" * 78)
-    print(f"{diverging} of {len(FIXTURES)} scripts produce two different conformant URIs")
+    print(f"{diverging} of {len(FIXTURES)} fixtures produce two different conformant URIs")
 
     # Worst case, spelled out.
     label, name = "Korean / Hangul", "한국어-테스트.txt"
@@ -66,13 +66,13 @@ def main() -> int:
     print(f"  NFC : {enc(nfc)}")
     print(f"  NFD : {enc(nfd)}")
     print(f"  percent-encoded length {len(enc(nfc))} vs {len(enc(nfd))}")
-    print("  Same filename. Both conformant. No shared prefix beyond the scheme.")
+    print("  Same filename. Both conformant. The encoded paths diverge immediately.")
 
-    print("\nScripts where NFC and NFD coincide (Devanagari and Arabic here) are not")
-    print("safe either -- they are simply cases where these particular characters have")
-    print("no canonical decomposition. A producer cannot know in advance which inputs")
-    print("are affected, which is why the constraint belongs in the spec rather than in")
-    print("per-tool judgement.")
+    print("\nFixtures where NFC and NFD coincide are not generally safe cases.")
+    print("Arabic here has no canonically decomposable characters. The Devanagari")
+    print("fixture does contain a decomposable sequence (U+095E -> U+092B U+093C),")
+    print("but U+095E is composition-excluded, so NFC retains that sequence. Producers")
+    print("still need one deterministic policy rather than per-input judgement.")
     return 0
 
 
