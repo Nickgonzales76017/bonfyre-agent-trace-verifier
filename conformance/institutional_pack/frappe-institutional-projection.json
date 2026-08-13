@@ -51,7 +51,7 @@
       "app": "Drive",
       "record_kind": "ArtifactBundle",
       "domain_effect": "Project the task, mappings, policies, provenance, validators, and Habitat manifest as content-addressable files without copying credentials.",
-      "evidence": "commit 46597b8cf23f557b1fab673e726f43e9d1d62c2f"
+      "evidence": "https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/pull/6/files"
     },
     {
       "app": "Insights",
