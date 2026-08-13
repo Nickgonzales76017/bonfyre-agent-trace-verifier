@@ -1,0 +1,19 @@
+{
+  "status": "ready_for_signing",
+  "artifact": "conformance/institutional_pack/benchmark-task.txt",
+  "bundle_required": true,
+  "certificate_identity": "https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/.github/workflows/release.yml@refs/tags/v*",
+  "certificate_oidc_issuer": "https://token.actions.githubusercontent.com",
+  "verification_command": [
+    "cosign",
+    "verify-blob",
+    "conformance/institutional_pack/benchmark-task.txt",
+    "--bundle",
+    "benchmark-task.sigstore.json",
+    "--certificate-identity-regexp",
+    "^https://github\\.com/Nickgonzales76017/bonfyre-agent-trace-verifier/\\.github/workflows/release\\.yml@refs/tags/v[0-9]+\\.[0-9]+\\.[0-9]+$",
+    "--certificate-oidc-issuer",
+    "https://token.actions.githubusercontent.com"
+  ],
+  "claim": "No bundle exists yet; this policy is a fail-closed verification contract, not evidence of a signature."
+}

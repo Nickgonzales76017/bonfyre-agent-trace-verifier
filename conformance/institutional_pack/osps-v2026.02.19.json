@@ -1,0 +1,32 @@
+{
+  "baseline_version": "2026.02.19",
+  "project": "https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier",
+  "assessed_at": "2026-08-13T22:30:00Z",
+  "scope": "OSPS Level 1; evidence available to a public unauthenticated consumer plus authenticated read-only repository settings",
+  "controls": [
+    {"id":"OSPS-AC-01.01","status":"unverified","evidence":["GitHub account MFA state is not public"]},
+    {"id":"OSPS-AC-02.01","status":"unverified","evidence":["Collaborator default assignment policy was not exposed by the repository API"]},
+    {"id":"OSPS-AC-03.01","status":"fail","evidence":["GET /repos/Nickgonzales76017/bonfyre-agent-trace-verifier/branches/main/protection returned 404 Branch not protected on 2026-08-13","GET /repos/Nickgonzales76017/bonfyre-agent-trace-verifier/rulesets returned []"]},
+    {"id":"OSPS-AC-03.02","status":"unverified","evidence":["Provider confirmation behavior is not represented by a repository artifact"]},
+    {"id":"OSPS-BR-01.01","status":"not_applicable","evidence":[".github/workflows/verify.yml consumes no pull-request metadata in shell or expression inputs"]},
+    {"id":"OSPS-BR-01.03","status":"pass","evidence":[".github/workflows/verify.yml declares permissions: contents: read and references no credentials"]},
+    {"id":"OSPS-BR-03.01","status":"pass","evidence":["README.md lists only HTTPS project channels"]},
+    {"id":"OSPS-BR-03.02","status":"pass","evidence":["Official releases are distributed by HTTPS from github.com"]},
+    {"id":"OSPS-BR-07.01","status":"unverified","evidence":["No public secret-scanning enforcement evidence was found; absence is not proof that account-level protection is disabled"]},
+    {"id":"OSPS-DO-01.01","status":"pass","evidence":["README.md documents CLI and GitHub Action usage"]},
+    {"id":"OSPS-DO-02.01","status":"pass","evidence":["CONTRIBUTING.md documents defect reports"]},
+    {"id":"OSPS-GV-02.01","status":"pass","evidence":["CONTRIBUTING.md identifies public GitHub issues and pull requests"]},
+    {"id":"OSPS-GV-03.01","status":"pass","evidence":["CONTRIBUTING.md"]},
+    {"id":"OSPS-LE-02.01","status":"pass","evidence":["LICENSE contains the OSI-approved MIT License"]},
+    {"id":"OSPS-LE-02.02","status":"pass","evidence":["GitHub source releases include LICENSE"]},
+    {"id":"OSPS-LE-03.01","status":"pass","evidence":["LICENSE"]},
+    {"id":"OSPS-LE-03.02","status":"pass","evidence":["LICENSE is present beside released source assets"]},
+    {"id":"OSPS-QA-01.01","status":"pass","evidence":["https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier"]},
+    {"id":"OSPS-QA-01.02","status":"pass","evidence":["Public Git commit history records author and timestamp"]},
+    {"id":"OSPS-QA-02.01","status":"not_applicable","evidence":["The executable uses only the Python standard library and has no package-manager dependency set"]},
+    {"id":"OSPS-QA-04.01","status":"not_applicable","evidence":["The assessed project has one repository"]},
+    {"id":"OSPS-QA-05.01","status":"pass","evidence":["Repository scan contains no generated executable artifacts"]},
+    {"id":"OSPS-QA-05.02","status":"pass","evidence":["Repository scan contains no binary artifacts"]},
+    {"id":"OSPS-VM-02.01","status":"pass","evidence":["SECURITY.md provides a private vulnerability-reporting channel"]}
+  ]
+}

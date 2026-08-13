@@ -1,0 +1,32 @@
+{
+  "observed_at": "2026-08-13T22:30:00Z",
+  "standards": {
+    "opentelemetry_genai": {
+      "commit": "8d3e4a0f3c34a46f6edb9c71e8666e02e6bf3958",
+      "registry": "https://github.com/open-telemetry/semantic-conventions-genai/blob/8d3e4a0f3c34a46f6edb9c71e8666e02e6bf3958/model/gen-ai/registry.yaml",
+      "spans": "https://github.com/open-telemetry/semantic-conventions-genai/blob/8d3e4a0f3c34a46f6edb9c71e8666e02e6bf3958/model/gen-ai/spans.yaml"
+    },
+    "openssf_osps": {
+      "version": "2026.02.19",
+      "commit": "b834f71d9cc9463631578556c90fffe922d9c4bb",
+      "checklist": "https://github.com/ossf/security-baseline/blob/b834f71d9cc9463631578556c90fffe922d9c4bb/docs/versions/2026-02-19-checklist.md"
+    },
+    "spdx": {
+      "version": "3.0.1",
+      "spec": "https://spdx.github.io/spdx-spec/v3.0.1/serializations/",
+      "context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+      "schema": "https://spdx.org/schema/3.0.1/spdx-json-schema.json",
+      "ontology": "https://spdx.org/rdf/3.0.1/spdx-model.ttl"
+    },
+    "sigstore_cosign": {
+      "commit": "98ff280b1942d3d49dbe8b34f41ad6e8154f4d88",
+      "verification": "https://docs.sigstore.dev/cosign/verifying/verify/"
+    },
+    "slsa": {
+      "version": "1.2",
+      "commit": "1686afeba11a456e470235ecf50cfc0d2f9ecbc3",
+      "verification": "https://slsa.dev/spec/v1.2/verifying-artifacts",
+      "predicate_type": "https://slsa.dev/provenance/v1"
+    }
+  }
+}

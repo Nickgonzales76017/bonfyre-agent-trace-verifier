@@ -1,0 +1,63 @@
+{
+  "schema_version": "bonfyre.frappe.institutional-projection.v1",
+  "episode": "https://github.com/sipyourdrink-ltd/bernstein/pull/3734",
+  "powers": [
+    {
+      "app": "Frappe/Core",
+      "record_kind": "ExternalEvent",
+      "domain_effect": "Normalize PR state, CI receipts, authority, and source references without treating a drag or comment as an authoritative merge.",
+      "evidence": "GitHub Actions Verify and Bernstein PR state"
+    },
+    {
+      "app": "ERPNext",
+      "record_kind": "CommitmentLedgerGuard",
+      "domain_effect": "Record no cash, credit, award, purchase, or resource commitment because none occurred.",
+      "booked_value_usd": 0,
+      "resource_commitment_created": false,
+      "evidence": "PR #3734 and verifier PR #6 contain no economic commitment"
+    },
+    {
+      "app": "CRM",
+      "record_kind": "RelationshipEpisode",
+      "domain_effect": "Preserve the warm maintainer-review state as waiting; do not promote it to collaboration, partnership, or adoption.",
+      "relationship_state": "technical_engagement_waiting_review",
+      "evidence": "https://github.com/sipyourdrink-ltd/bernstein/pull/3734"
+    },
+    {
+      "app": "HRMS",
+      "record_kind": "AuthorityRoleBoundary",
+      "domain_effect": "Contributor owns the proposed patch; the upstream maintainer owns review and merge. No personnel record is created.",
+      "evidence": "GitHub author and requested-reviewer roles on PR #3734"
+    },
+    {
+      "app": "Helpdesk",
+      "record_kind": "IssueResolutionChain",
+      "domain_effect": "Link the reproduced credential leak in issue #3700 to its tested remediation PR #3734 and keep the ticket open until upstream closes it.",
+      "evidence": "https://github.com/sipyourdrink-ltd/bernstein/issues/3700"
+    },
+    {
+      "app": "LMS",
+      "record_kind": "ConformanceLesson",
+      "domain_effect": "Teach redaction-before-hash, content-opt-in telemetry, and unsigned-versus-signed provenance using the runnable pack.",
+      "evidence": "conformance/institutional_pack/README.md"
+    },
+    {
+      "app": "Wiki",
+      "record_kind": "EvidenceClaim",
+      "domain_effect": "Publish only pinned source claims and explicitly deny standards certification, signature issuance, merge, and adoption claims.",
+      "evidence": "conformance/institutional_pack/standards-lock.json"
+    },
+    {
+      "app": "Drive",
+      "record_kind": "ArtifactBundle",
+      "domain_effect": "Project the task, mappings, policies, provenance, validators, and Habitat manifest as content-addressable files without copying credentials.",
+      "evidence": "https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/pull/6/files"
+    },
+    {
+      "app": "Insights",
+      "record_kind": "ConformanceDashboard",
+      "domain_effect": "Expose 3 telemetry spans, 24 OSPS controls, 1 SPDX digest, 1 unsigned SLSA binding, 1 Sigstore policy, 3 rooms, and 7 ports without one composite score.",
+      "evidence": "python3 conformance/institutional_pack/validate.py --all"
+    }
+  ]
+}
