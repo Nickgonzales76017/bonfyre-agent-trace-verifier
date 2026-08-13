@@ -27,7 +27,8 @@ attached to root-element `guid` sameness, not to result identity:
 Neither the `fingerprints` nor the `partialFingerprints` section states any
 canonicalization requirement for the strings that feed a fingerprint.
 
-This script demonstrates both halves and the one-line fix.
+This script demonstrates both halves, an insufficient direct-URI normalization,
+and two sufficient repairs.
 """
 from __future__ import annotations
 
@@ -87,6 +88,22 @@ def canonical_text(text: str) -> str:
     return text.replace("\r\n", "\n").replace("\r", "\n")
 
 
+def canonicalize_mapped_uri_path(uri: str) -> str:
+    """Decode, normalize, and re-encode the mapped URI's path component.
+
+    Percent-encoding is reversible. This path-scoped function is sufficient for
+    the reproduction and avoids claiming that pre-mapping normalization is the
+    only repair. A general URI canonicalizer must handle each component and its
+    reserved-character rules separately.
+    """
+    parts = urllib.parse.urlsplit(uri)
+    decoded_path = urllib.parse.unquote(parts.path, encoding="utf-8", errors="strict")
+    normalized_path = iri_to_uri(canonical_text(decoded_path))
+    return urllib.parse.urlunsplit(
+        (parts.scheme, parts.netloc, normalized_path, parts.query, parts.fragment)
+    )
+
+
 def main() -> int:
     print("=" * 74)
     print("SARIF result identity vs Unicode normal form and line endings")
@@ -126,29 +143,40 @@ def main() -> int:
     fp_c2 = partial_fingerprint(uri_nfc, SNIPPET_CRLF, "NULL_DEREF")
     print(f"  MATCH : {fp_c1 == fp_c2}")
 
-    # ---- Naive fix: canonicalize AFTER the IRI-to-URI mapping ------------
+    # ---- Insufficient fix: apply NFC directly to the mapped URI ----------
     # This is the obvious reading of "normalize your fingerprint inputs", and
     # it does NOT work. Percent-encoding has already frozen the combining
     # character into ASCII bytes ("o%CC%88"), so NFC has nothing left to fold.
-    print("\nNAIVE FIX -- canonicalize AFTER the IRI-to-URI mapping")
+    print("\nINSUFFICIENT FIX -- apply NFC directly to the mapped URI")
     variants = [
         ("NFC / LF  ", uri_nfc, SNIPPET_LF),
         ("NFD / LF  ", uri_nfd, SNIPPET_LF),
         ("NFC / CRLF", uri_nfc, SNIPPET_CRLF),
         ("NFD / CRLF", uri_nfd, SNIPPET_CRLF),
     ]
-    fps_after = []
+    fps_direct = []
     for label, uri, snip in variants:
         fp = partial_fingerprint(canonical_text(uri), canonical_text(snip), "NULL_DEREF")
-        fps_after.append(fp)
+        fps_direct.append(fp)
         print(f"  {label} -> {fp}")
-    after_ok = len(set(fps_after)) == 1
-    print(f"  All four agree : {after_ok}   <-- still broken")
+    direct_ok = len(set(fps_direct)) == 1
+    print(f"  All four agree : {direct_ok}   <-- still broken")
     print("  NFC('so%CC%88r.txt') == 'so%CC%88r.txt'. The encoding is already ASCII;")
     print("  the normal-form distinction survives as literal percent-triplets.")
 
-    # ---- Correct fix: canonicalize BEFORE the IRI-to-URI mapping ---------
-    print("\nCORRECT FIX -- canonicalize BEFORE the IRI-to-URI mapping")
+    # ---- Sufficient post-mapping repair: decode, NFC, re-encode -----------
+    print("\nSUFFICIENT FIX A -- decode, normalize, and re-encode the mapped path")
+    fps_roundtrip = []
+    for label, uri, snip in variants:
+        canonical_uri = canonicalize_mapped_uri_path(uri)
+        fp = partial_fingerprint(canonical_uri, canonical_text(snip), "NULL_DEREF")
+        fps_roundtrip.append(fp)
+        print(f"  {label} -> {fp}")
+    roundtrip_ok = len(set(fps_roundtrip)) == 1
+    print(f"  All four agree : {roundtrip_ok}")
+
+    # ---- Sufficient pre-mapping repair: NFC, then map --------------------
+    print("\nSUFFICIENT FIX B -- canonicalize BEFORE the IRI-to-URI mapping")
     fps_before = []
     for label, name, snip in [
         ("NFC / LF  ", NAME_NFC, SNIPPET_LF),
@@ -168,17 +196,17 @@ def main() -> int:
     print("=" * 74)
     distinct_without = len({fp_a1, fp_a2, fp_b2, fp_c1, fp_c2})
     print(f"  No canonicalization        : {distinct_without} distinct fingerprints for 1 logical finding")
-    print(f"  Canonicalize after mapping : {len(set(fps_after))} distinct fingerprints  (INSUFFICIENT)")
-    print(f"  Canonicalize before mapping: {len(set(fps_before))} distinct fingerprint   (CORRECT)")
+    print(f"  NFC on mapped URI          : {len(set(fps_direct))} distinct fingerprints  (INSUFFICIENT)")
+    print(f"  Decode/NFC/re-encode path  : {len(set(fps_roundtrip))} distinct fingerprint   (SUFFICIENT)")
+    print(f"  NFC before mapping         : {len(set(fps_before))} distinct fingerprint   (SUFFICIENT)")
     print("\n  Percent-encoding does NOT fold normal form:")
     print(f"    NFC 'o-umlaut' -> {urllib.parse.quote(unicodedata.normalize('NFC', 'ö'))}")
     print(f"    NFD 'o-umlaut' -> {urllib.parse.quote(unicodedata.normalize('NFD', 'ö'))}")
-    print("\n  The ordering is the load-bearing requirement. RFC 3987 mapping is")
-    print("  lossy with respect to canonical equivalence: it is not reversible")
-    print("  into a form where NFC can still act. Any normalization requirement")
-    print("  the TC adopts must therefore be stated as a precondition of the")
-    print("  IRI-to-URI transformation, not as a property of the final string.")
-    return 0 if (before_ok and not after_ok) else 1
+    print("\n  Applying NFC directly to the finished ASCII URI is insufficient.")
+    print("  Percent-encoding is reversible, so component-aware decode/NFC/re-encode")
+    print("  works too. A specification can require either sufficient placement;")
+    print("  it must not imply that NFC over the mapped URI string itself is enough.")
+    return 0 if (before_ok and roundtrip_ok and not direct_ok) else 1
 
 
 if __name__ == "__main__":
