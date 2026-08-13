@@ -1,0 +1,6 @@
+[
+  {"action": "read_ticket"},
+  {"action": "assign_tier2", "evidence": "receipt:ticket-version-2"},
+  {"action": "send_resolution", "reviewer": "human:operator-3", "evidence": "receipt:message-882"},
+  {"action": "close_ticket", "evidence": "receipt:ticket-version-3"}
+]

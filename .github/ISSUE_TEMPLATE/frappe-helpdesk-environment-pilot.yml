@@ -1,0 +1,39 @@
+name: Governed workflow environment pilot
+description: Check fit for one fixed-scope reset/branch/replay environment projection.
+title: "Environment pilot: "
+labels: ["commercial-intake"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This public issue checks fit only. Do not include credentials, customer data, private traces, or proprietary schemas. Scope, payment, and acceptance criteria are agreed privately before work.
+  - type: input
+    id: public-workflow
+    attributes:
+      label: Public or synthetic workflow
+      description: Link to public documentation or describe a synthetic workflow shape.
+    validations:
+      required: true
+  - type: input
+    id: integration-target
+    attributes:
+      label: Integration target
+      description: Name one environment, trace schema, CI system, or evaluation platform.
+    validations:
+      required: true
+  - type: textarea
+    id: success-boundary
+    attributes:
+      label: Acceptance boundary
+      description: State the reset, replay, policy, and success invariants you need measured.
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope acknowledgement
+      options:
+        - label: I understand the listed $2,500 price is a non-binding fixed-scope offer and no work begins until scope and payment are agreed.
+          required: true
+        - label: I will not post secrets, customer data, or proprietary traces in this issue.
+          required: true

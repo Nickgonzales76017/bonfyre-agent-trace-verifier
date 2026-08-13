@@ -82,6 +82,8 @@ The CLI is MIT licensed. Bonfyre offers a bounded **Agent Workflow Safety Audit*
 
 Start with the structured [Agent Workflow Safety Audit intake](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/issues/new?template=agent-workflow-safety-audit.yml). Do not include credentials, private traces, customer data, or other sensitive material. The intake confirms fit and scope only; no work or payment is accepted until both sides agree on the delivery boundary.
 
+For environment and RL/evaluation teams, the repository also includes a [synthetic Helpdesk SLA environment](environments/helpdesk_sla/README.md) with deterministic reset, isolated branching, JSON replay, explicit authority/effect boundaries, and the same eight verifier dimensions. A fixed-scope one-workflow environment projection pilot is listed at **$2,500 USD** through the [environment pilot intake](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/issues/new?template=frappe-helpdesk-environment-pilot.yml).
+
 ## Limits
 
 This verifier checks declared traces; it does not prove that an event source is truthful. Production deployments should sign receipts, bind event identities to the source system, and preserve append-only evidence.
