@@ -13,6 +13,29 @@ A small, deterministic verifier for governed agent execution traces. It keeps ei
 
 The verifier uses only the Python standard library, performs no network calls, and emits a content-addressed JSON receipt. The same trace always produces the same digest and receipt ID.
 
+## Identity continuity
+
+The digest is an **identity**, not a checksum over an accident of transport. Two runs of the same agent recorded on different machines describe the same execution, and they must produce the same digest.
+
+That requires canonicalising before hashing, and canonicalising more than key order:
+
+| Encoding difference | Same digest? |
+|---|---|
+| Object key order | yes |
+| `1` vs `1.0` | yes |
+| CRLF vs LF line endings | yes, since v1.1.0 |
+| Unicode NFD vs NFC | yes, since v1.1.0 |
+| Normal form differing in a **key** | yes, since v1.1.0 |
+| Genuinely different content | **no** — normalisation must not collapse real differences |
+
+Before v1.1.0 the last four were wrong: sorting keys was not enough, so a trace captured on Windows and the same trace on Linux hashed differently. Normalisation now folds to NFC and LF, recursively, across keys and nested structures.
+
+This is deliberately a **repair**, not a rejection. A verifier that refuses a Windows-authored trace is not useful; one that silently gives it a different identity is worse.
+
+Receipts carry `canonicalization_version`, so a consumer can tell that two digests are not comparable rather than silently comparing across a canonicalisation change.
+
+The same class of bug, found by a maintainer during upstream review of a SARIF finding addresser, is written up in the [Identity Continuity case study](https://github.com/sipyourdrink-ltd/bernstein/pull/3695) — where CRLF and NFD were each producing different identities for identical findings.
+
 ## Try it
 
 ```bash

@@ -7,19 +7,70 @@ import argparse
 import hashlib
 import json
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 VALID_STATUSES = {"succeeded", "failed", "cancelled"}
+
+# Canonicalisation version. The trace digest is only comparable between two
+# runs that canonicalised the same way, so this is recorded alongside the
+# digest rather than left implicit.
+CANONICALIZATION_VERSION = "2"
 
 
 class InputError(ValueError):
     pass
 
 
+def canonical_text(text: str) -> str:
+    """Normalise text so that encoding differences are not identity differences.
+
+    Sorting keys is not enough. The same trace captured on Windows and on
+    Linux differs by line ending; the same string typed on macOS and pasted
+    from a Linux terminal can differ by Unicode normal form. Neither is a
+    behavioural difference, and if either changes the digest then the digest
+    is not an identity -- it is a checksum over an accident of transport.
+
+    Two normalisations, both narrow:
+
+      NFC          combining sequences fold to their composed form, so
+                   "café" and "café" are the same string
+      LF endings   CRLF and lone CR both become LF
+
+    This deliberately repairs normal form rather than rejecting it. A
+    verifier that refuses a Windows-authored trace is not useful; one that
+    silently gives it a different identity is worse.
+    """
+    text = unicodedata.normalize("NFC", text)
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def canonical_value(value: Any) -> Any:
+    """Recursively canonicalise a decoded JSON value.
+
+    Applies to dict KEYS as well as values -- a key differing only in normal
+    form would otherwise survive sort_keys and change the preimage.
+    """
+    if isinstance(value, str):
+        return canonical_text(value)
+    if isinstance(value, dict):
+        return {canonical_text(str(k)): canonical_value(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [canonical_value(v) for v in value]
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, float) and value.is_integer():
+        # 1 and 1.0 are the same number; JSON round-trips make this common
+        return int(value)
+    return value
+
+
 def canonical_bytes(value: Any) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return json.dumps(
+        canonical_value(value), sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
 
 
 def finding(ok: bool, summary: str, details: Optional[List[str]] = None) -> Dict[str, Any]:
@@ -179,6 +230,10 @@ def verify(trace: Dict[str, Any]) -> Dict[str, Any]:
         "verifier_version": VERSION,
         "trace_id": trace["trace_id"],
         "trace_digest_sha256": trace_digest,
+        # digests are only comparable across runs that canonicalised the
+        # same way; recording this lets a consumer notice rather than
+        # silently compare across a canonicalisation change
+        "canonicalization_version": CANONICALIZATION_VERSION,
         "passed": passed,
         "dimensions": dimensions,
         "metrics": {"event_count": len(normalized_events), "total_cost_usd": total_cost},
