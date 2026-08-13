@@ -27,6 +27,9 @@ CONTENT_ATTRIBUTES = {
     "gen_ai.input.messages", "gen_ai.output.messages", "gen_ai.system_instructions",
     "gen_ai.tool.call.arguments", "gen_ai.tool.call.result", "gen_ai.tool.definitions",
 }
+FRAPPE_APPS = {
+    "Frappe/Core", "ERPNext", "CRM", "HRMS", "Helpdesk", "LMS", "Wiki", "Drive", "Insights"
+}
 
 
 def load(name: str) -> Any:
@@ -141,6 +144,30 @@ def validate_habitat() -> dict[str, int]:
     return {"rooms": len(rooms), "ports": sum(len(room["ports"]) for room in rooms)}
 
 
+def validate_bonfyre_contracts() -> dict[str, int]:
+    inventory = load("bonfyre-command-contracts.json")
+    commands = inventory["commands"]
+    assert inventory["count"] == 91 == len(commands) == len(set(commands))
+    assert all(command.startswith("Bonfyre") for command in commands)
+    bindings = inventory["bindings_in_this_pack"]
+    assert set(bindings) <= set(commands)
+    assert len(bindings) == 9
+    return {"public_commands": len(commands), "bound_here": len(bindings)}
+
+
+def validate_frappe_projection() -> dict[str, int]:
+    projection = load("frappe-institutional-projection.json")
+    powers = projection["powers"]
+    assert {power["app"] for power in powers} == FRAPPE_APPS
+    assert len(powers) == 9 == len({power["record_kind"] for power in powers})
+    assert all(power["domain_effect"] and power["evidence"] for power in powers)
+    erp = next(power for power in powers if power["app"] == "ERPNext")
+    assert erp["booked_value_usd"] == 0 and erp["resource_commitment_created"] is False
+    hr = next(power for power in powers if power["app"] == "HRMS")
+    assert "No personnel record" in hr["domain_effect"]
+    return {"app_powers": len(powers), "distinct_record_kinds": len(powers)}
+
+
 def validate_all() -> dict[str, Any]:
     lock = load("standards-lock.json")
     assert set(lock["standards"]) == {
@@ -153,6 +180,8 @@ def validate_all() -> dict[str, Any]:
         "slsa": validate_slsa(),
         "sigstore": validate_sigstore(),
         "habitat": validate_habitat(),
+        "bonfyre_contracts": validate_bonfyre_contracts(),
+        "frappe": validate_frappe_projection(),
     }
 
 

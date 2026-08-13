@@ -10,6 +10,8 @@ class InstitutionalPackTests(unittest.TestCase):
         self.assertEqual(result["openssf_osps"]["fail"], 1)
         self.assertFalse(result["slsa"]["signed"])
         self.assertEqual(result["habitat"]["rooms"], 3)
+        self.assertEqual(result["bonfyre_contracts"]["public_commands"], 91)
+        self.assertEqual(result["frappe"]["app_powers"], 9)
 
 
 if __name__ == "__main__":

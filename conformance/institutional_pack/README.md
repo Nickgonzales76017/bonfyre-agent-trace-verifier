@@ -32,6 +32,12 @@ The artifacts are pinned in `standards-lock.json`:
   been invented; issuance remains a release-workflow continuation.
 - `aurekai-commons.json` exposes the live upstream episode, this conformance
   pack, and its benchmark task as three source-backed public Habitat rooms.
+- `bonfyre-command-contracts.json` preserves all 91 public Bonfyre identities
+  and names the nine contracts exercised here; it does not replace them with a
+  generic executor.
+- `frappe-institutional-projection.json` sends the same real episode through
+  all nine app powers with domain-specific effects, explicit authority, and a
+  zero-value/no-commitment economic guard.
 
 Primary sources:
 
