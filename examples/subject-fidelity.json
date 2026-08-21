@@ -1,0 +1,92 @@
+{
+  "trace_id": "subject-fidelity-001",
+  "task": {
+    "required_outcomes": ["ticket.closed"],
+    "max_steps": 5,
+    "budget_usd": 0.06,
+    "require_context_events": true,
+    "require_provider_fidelity": true,
+    "subject_provider": "anthropic",
+    "required_capabilities": ["tool_calls", "context_events"]
+  },
+  "adapter_capabilities": {
+    "available": ["tool_calls", "context_events"],
+    "unavailable": ["native_compaction_hook"]
+  },
+  "policy": {
+    "allowed_effects": ["read", "write", "external_send"],
+    "review_required": ["external_send"],
+    "evidence_required": ["write", "external_send"],
+    "authority": {
+      "support-agent": ["ticket:read", "ticket:write", "message:send"]
+    }
+  },
+  "events": [
+    {
+      "event_id": "evt-1",
+      "actor": "support-agent",
+      "action": "read_ticket",
+      "resource": "ticket:HD-1042",
+      "effect": "read",
+      "authority": "ticket:read",
+      "status": "succeeded",
+      "cost_usd": 0.002
+    },
+    {
+      "event_id": "evt-2",
+      "event_type": "model_turn",
+      "actor": "support-agent",
+      "action": "reason_about_ticket",
+      "resource": "runtime:subject",
+      "effect": "read",
+      "authority": "ticket:read",
+      "status": "succeeded",
+      "provider": "anthropic",
+      "evidence_origin": "subject",
+      "cost_usd": 0.006
+    },
+    {
+      "event_id": "evt-3",
+      "event_type": "context_compaction",
+      "actor": "support-agent",
+      "action": "compact_context",
+      "resource": "runtime:subject-context",
+      "effect": "read",
+      "authority": "ticket:read",
+      "status": "succeeded",
+      "context": {
+        "before_tokens": 12000,
+        "after_tokens": 6200,
+        "strategy": "summary+anchors"
+      },
+      "cost_usd": 0.0
+    },
+    {
+      "event_id": "evt-4",
+      "actor": "support-agent",
+      "action": "close_ticket",
+      "resource": "ticket:HD-1042",
+      "effect": "write",
+      "authority": "ticket:write",
+      "status": "succeeded",
+      "evidence": ["receipt:ticket-version-9"],
+      "cost_usd": 0.004
+    },
+    {
+      "event_id": "evt-5",
+      "actor": "support-agent",
+      "action": "send_resolution",
+      "resource": "contact:customer-17",
+      "effect": "external_send",
+      "authority": "message:send",
+      "status": "succeeded",
+      "review": {
+        "status": "approved",
+        "reviewer": "human:operator-3"
+      },
+      "evidence": ["receipt:message-882"],
+      "cost_usd": 0.003
+    }
+  ],
+  "outcomes": ["ticket.closed"]
+}
