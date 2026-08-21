@@ -11,7 +11,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 VALID_STATUSES = {"succeeded", "failed", "cancelled"}
 CONTEXT_EVENT_TYPES = {"context_compaction", "context_strategy"}
 MODEL_TURN_EVENT_TYPE = "model_turn"
@@ -170,6 +170,11 @@ def _provider_fidelity_dimension(
         not isinstance(subject_provider, str) or not subject_provider
     ):
         raise InputError("task.subject_provider must be a non-empty string")
+    canonical_subject_provider = (
+        canonical_text(subject_provider)
+        if isinstance(subject_provider, str)
+        else None
+    )
 
     model_turns = [
         event for event in events if event.get("event_type") == MODEL_TURN_EVENT_TYPE
@@ -198,9 +203,9 @@ def _provider_fidelity_dimension(
         if origin == "subject":
             subject_turns += 1
             if (
-                subject_provider is not None
+                canonical_subject_provider is not None
                 and isinstance(provider, str)
-                and provider != subject_provider
+                and canonical_text(provider) != canonical_subject_provider
             ):
                 errors.append(
                     f"{label}: subject turn used a provider other than task.subject_provider"
@@ -224,7 +229,10 @@ def _provider_fidelity_dimension(
             errors,
         ),
         {
-            "subject_provider": subject_provider,
+            # The receipt must obey the same equivalence relation as its trace
+            # digest. Emitting the raw spelling here would make NFC/NFD-equivalent
+            # traces share an identity but serialize to different receipts.
+            "subject_provider": canonical_subject_provider,
             "subject_model_turn_count": subject_turns,
             "non_subject_model_turn_count": non_subject_turns,
         },
@@ -235,15 +243,19 @@ def _adapter_capability_dimension(
     trace: Dict[str, Any],
     task: Dict[str, Any],
 ) -> tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
-    required_raw = task.get("required_capabilities", [])
-    capabilities_raw = trace.get("adapter_capabilities")
-
-    if not required_raw and capabilities_raw is None:
-        return None, {}
-
-    required = require_list(required_raw, "task.required_capabilities")
+    if "required_capabilities" in task:
+        required = require_list(
+            task["required_capabilities"], "task.required_capabilities"
+        )
+    else:
+        required = []
     if not all(isinstance(item, str) and item for item in required):
         raise InputError("task.required_capabilities must contain non-empty strings")
+
+    capabilities_present = "adapter_capabilities" in trace
+    capabilities_raw = trace.get("adapter_capabilities")
+    if not required and not capabilities_present:
+        return None, {}
 
     capabilities = require_mapping(capabilities_raw, "adapter_capabilities")
     available = require_list(capabilities.get("available", []), "adapter_capabilities.available")
