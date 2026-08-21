@@ -11,8 +11,11 @@ import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 VALID_STATUSES = {"succeeded", "failed", "cancelled"}
+CONTEXT_EVENT_TYPES = {"context_compaction", "context_strategy"}
+MODEL_TURN_EVENT_TYPE = "model_turn"
+PROVIDER_EVIDENCE_ORIGINS = {"subject", "host", "external"}
 
 # Canonicalisation version. The trace digest is only comparable between two
 # runs that canonicalised the same way, so this is recorded alongside the
@@ -89,6 +92,194 @@ def require_list(value: Any, name: str) -> List[Any]:
     return value
 
 
+def _nonnegative_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
+def _context_management_dimension(
+    task: Dict[str, Any],
+    events: List[Dict[str, Any]],
+) -> tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
+    required = task.get("require_context_events", False)
+    if not isinstance(required, bool):
+        raise InputError("task.require_context_events must be a boolean")
+
+    context_events = [
+        event for event in events if event.get("event_type") in CONTEXT_EVENT_TYPES
+    ]
+    if not required and not context_events:
+        return None, {}
+
+    errors: List[str] = []
+    for event in context_events:
+        label = event.get("event_id", "<missing>")
+        context = event.get("context")
+        if not isinstance(context, dict):
+            errors.append(f"{label}: context-management event lacks a context object")
+            continue
+
+        before = context.get("before_tokens")
+        after = context.get("after_tokens")
+        strategy = context.get("strategy")
+        if not _nonnegative_int(before):
+            errors.append(f"{label}: context.before_tokens must be a non-negative integer")
+        if not _nonnegative_int(after):
+            errors.append(f"{label}: context.after_tokens must be a non-negative integer")
+        if not isinstance(strategy, str) or not strategy:
+            errors.append(f"{label}: context.strategy must be a non-empty string")
+        if (
+            event.get("event_type") == "context_compaction"
+            and _nonnegative_int(before)
+            and _nonnegative_int(after)
+            and after > before
+        ):
+            errors.append(f"{label}: context compaction increased token count")
+
+    if required and not context_events:
+        errors.append("task requires first-class context-management events")
+
+    return (
+        finding(
+            not errors,
+            (
+                "context-management events are explicit and measurable"
+                if not errors
+                else "context-management trace requirements were not met"
+            ),
+            errors,
+        ),
+        {
+            "context_event_count": len(context_events),
+            "context_event_types": sorted(
+                {event["event_type"] for event in context_events}
+            ),
+        },
+    )
+
+
+def _provider_fidelity_dimension(
+    task: Dict[str, Any],
+    events: List[Dict[str, Any]],
+) -> tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
+    required = task.get("require_provider_fidelity", False)
+    if not isinstance(required, bool):
+        raise InputError("task.require_provider_fidelity must be a boolean")
+
+    subject_provider = task.get("subject_provider")
+    if subject_provider is not None and (
+        not isinstance(subject_provider, str) or not subject_provider
+    ):
+        raise InputError("task.subject_provider must be a non-empty string")
+
+    model_turns = [
+        event for event in events if event.get("event_type") == MODEL_TURN_EVENT_TYPE
+    ]
+    if not required and subject_provider is None and not model_turns:
+        return None, {}
+
+    errors: List[str] = []
+    subject_turns = 0
+    non_subject_turns = 0
+
+    if required and subject_provider is None:
+        errors.append("provider fidelity requires task.subject_provider")
+
+    for event in model_turns:
+        label = event.get("event_id", "<missing>")
+        provider = event.get("provider")
+        origin = event.get("evidence_origin")
+
+        if not isinstance(provider, str) or not provider:
+            errors.append(f"{label}: model turn has no provider")
+        if origin not in PROVIDER_EVIDENCE_ORIGINS:
+            errors.append(f"{label}: model turn has invalid or missing evidence_origin")
+            continue
+
+        if origin == "subject":
+            subject_turns += 1
+            if (
+                subject_provider is not None
+                and isinstance(provider, str)
+                and provider != subject_provider
+            ):
+                errors.append(
+                    f"{label}: subject turn used a provider other than task.subject_provider"
+                )
+        else:
+            # Host/external evidence is allowed, but it is counted separately
+            # and can never silently satisfy the subject-provider requirement.
+            non_subject_turns += 1
+
+    if required and subject_turns == 0:
+        errors.append("provider fidelity requires at least one subject-origin model turn")
+
+    return (
+        finding(
+            not errors,
+            (
+                "subject turns preserve provider fidelity and foreign evidence is explicit"
+                if not errors
+                else "provider-fidelity requirements were not met"
+            ),
+            errors,
+        ),
+        {
+            "subject_provider": subject_provider,
+            "subject_model_turn_count": subject_turns,
+            "non_subject_model_turn_count": non_subject_turns,
+        },
+    )
+
+
+def _adapter_capability_dimension(
+    trace: Dict[str, Any],
+    task: Dict[str, Any],
+) -> tuple[Optional[Dict[str, Any]], Dict[str, Any]]:
+    required_raw = task.get("required_capabilities", [])
+    capabilities_raw = trace.get("adapter_capabilities")
+
+    if not required_raw and capabilities_raw is None:
+        return None, {}
+
+    required = require_list(required_raw, "task.required_capabilities")
+    if not all(isinstance(item, str) and item for item in required):
+        raise InputError("task.required_capabilities must contain non-empty strings")
+
+    capabilities = require_mapping(capabilities_raw, "adapter_capabilities")
+    available = require_list(capabilities.get("available", []), "adapter_capabilities.available")
+    unavailable = require_list(
+        capabilities.get("unavailable", []), "adapter_capabilities.unavailable"
+    )
+    if not all(isinstance(item, str) and item for item in available + unavailable):
+        raise InputError("adapter capability entries must be non-empty strings")
+
+    available_set = set(available)
+    unavailable_set = set(unavailable)
+    errors: List[str] = []
+    overlap = sorted(available_set & unavailable_set)
+    if overlap:
+        errors.extend(f"capability declared both available and unavailable: {item}" for item in overlap)
+
+    missing = sorted(set(required) - available_set)
+    errors.extend(f"required capability unavailable: {item}" for item in missing)
+
+    return (
+        finding(
+            not errors,
+            (
+                "adapter capability differences are explicit"
+                if not errors
+                else "adapter capability requirements were not met"
+            ),
+            errors,
+        ),
+        {
+            "adapter_available_capabilities": sorted(available_set),
+            "adapter_unavailable_capabilities": sorted(unavailable_set),
+        },
+    )
+
+
 def verify(trace: Dict[str, Any]) -> Dict[str, Any]:
     trace = require_mapping(trace, "trace")
     task = require_mapping(trace.get("task"), "task")
@@ -105,6 +296,7 @@ def verify(trace: Dict[str, Any]) -> Dict[str, Any]:
         normalized_events.append(event)
 
     dimensions: Dict[str, Dict[str, Any]] = {}
+    specialty_metrics: Dict[str, Any] = {}
 
     required_outcomes = set(require_list(task.get("required_outcomes", []), "task.required_outcomes"))
     missing_outcomes = sorted(required_outcomes - outcomes)
@@ -133,6 +325,25 @@ def verify(trace: Dict[str, Any]) -> Dict[str, Any]:
         "event identities and state references are consistent" if not semantic_errors else "trace semantics are inconsistent",
         semantic_errors,
     )
+
+    context_dimension, context_metrics = _context_management_dimension(
+        task, normalized_events
+    )
+    if context_dimension is not None:
+        dimensions["context_management"] = context_dimension
+        specialty_metrics.update(context_metrics)
+
+    provider_dimension, provider_metrics = _provider_fidelity_dimension(
+        task, normalized_events
+    )
+    if provider_dimension is not None:
+        dimensions["provider_fidelity"] = provider_dimension
+        specialty_metrics.update(provider_metrics)
+
+    capability_dimension, capability_metrics = _adapter_capability_dimension(trace, task)
+    if capability_dimension is not None:
+        dimensions["adapter_capabilities"] = capability_dimension
+        specialty_metrics.update(capability_metrics)
 
     allowed_effects = set(require_list(policy.get("allowed_effects", []), "policy.allowed_effects"))
     review_required = set(require_list(policy.get("review_required", []), "policy.review_required"))
@@ -225,6 +436,11 @@ def verify(trace: Dict[str, Any]) -> Dict[str, Any]:
     trace_digest = hashlib.sha256(canonical_bytes(trace)).hexdigest()
     passed = all(item["passed"] for item in dimensions.values())
     receipt_seed = f"bonfyre-agent-trace-verifier:{VERSION}:{trace_digest}:{str(passed).lower()}".encode("utf-8")
+    metrics: Dict[str, Any] = {
+        "event_count": len(normalized_events),
+        "total_cost_usd": total_cost,
+    }
+    metrics.update(specialty_metrics)
     return {
         "schema": "bonfyre.agent_trace_verification.v1",
         "verifier_version": VERSION,
@@ -236,7 +452,7 @@ def verify(trace: Dict[str, Any]) -> Dict[str, Any]:
         "canonicalization_version": CANONICALIZATION_VERSION,
         "passed": passed,
         "dimensions": dimensions,
-        "metrics": {"event_count": len(normalized_events), "total_cost_usd": total_cost},
+        "metrics": metrics,
         "receipt_id": "bfv_" + hashlib.sha256(receipt_seed).hexdigest()[:24],
     }
 
