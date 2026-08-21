@@ -1,6 +1,8 @@
-# Bonfyre Agent Trace Verifier
+# Bonfÿre Agent Trace Verifier
 
-A small, deterministic verifier for governed agent execution traces. It keeps eight evaluation dimensions separate instead of hiding safety failures inside one reward score:
+A small, deterministic verifier for governed agent execution traces. It keeps evaluation dimensions separate instead of hiding safety, authority, evidence, recovery, provider, or context failures inside one reward score.
+
+Every trace is checked across the original eight dimensions:
 
 - task success
 - semantic consistency
@@ -10,6 +12,14 @@ A small, deterministic verifier for governed agent execution traces. It keeps ei
 - recovery quality
 - trajectory efficiency
 - cost
+
+Since v1.2.0, traces can also opt into three subject-fidelity dimensions when the underlying runtime can actually make those claims:
+
+- **context management** — compaction and context-strategy events are first-class events with measurable before/after token state and named strategy;
+- **provider fidelity** — every model turn can identify its provider and whether its evidence came from the subject runtime, the host, or an external evaluator; host evidence never silently counts as subject evidence;
+- **adapter capabilities** — available and unavailable capabilities are explicit, and required capabilities cannot disappear from the claim by omission.
+
+The added dimensions are conditional by design. A v1.1 trace that does not claim provider/context/capability fidelity still produces exactly the original eight dimensions, so strengthening the verifier does not silently widen the contract of older evidence.
 
 The verifier uses only the Python standard library, performs no network calls, and emits a content-addressed JSON receipt. The same trace always produces the same digest and receipt ID.
 
@@ -41,8 +51,11 @@ The same class of bug, found by a maintainer during upstream review of a SARIF f
 ```bash
 python3 verifier.py examples/pass.json
 python3 verifier.py examples/fail.json  # exits 1 and explains each failed dimension
+python3 verifier.py examples/subject-fidelity.json
 python3 -m unittest discover -s tests -v
 ```
+
+`examples/subject-fidelity.json` demonstrates a subject-provider model turn, a first-class context compaction, explicit adapter capability differences, normal authority/effect checks, and one final receipt rather than a separate evaluation subsystem.
 
 Passing traces exit `0`, policy failures exit `1`, and malformed inputs exit `2`.
 
@@ -70,23 +83,61 @@ The step fails for policy violations or malformed input. It exposes `passed`, `r
 
 Each trace declares the task envelope, policy, ordered events, and observed outcomes. Effects are explicit. Review-gated effects need an approved named reviewer. Each action must use an authority grant assigned to its actor. Required evidence is attached to the event that produced it. Failed mutating effects require a later successful compensation event.
 
-See [`examples/pass.json`](examples/pass.json) for the complete minimal contract.
+Provider/context evaluation follows the same rule: **make the subject visible instead of inferring it after the fact.**
+
+A provider-sensitive trace can declare:
+
+```json
+{
+  "require_provider_fidelity": true,
+  "subject_provider": "anthropic"
+}
+```
+
+and a subject model turn records:
+
+```json
+{
+  "event_type": "model_turn",
+  "provider": "anthropic",
+  "evidence_origin": "subject"
+}
+```
+
+A host-side judge call is legal evidence, but it must say `"evidence_origin": "host"`; it cannot silently impersonate the runtime being evaluated.
+
+Context pressure is likewise observable:
+
+```json
+{
+  "event_type": "context_compaction",
+  "context": {
+    "before_tokens": 12000,
+    "after_tokens": 6200,
+    "strategy": "summary+anchors"
+  }
+}
+```
+
+See [`examples/pass.json`](examples/pass.json) for the minimal contract and [`examples/subject-fidelity.json`](examples/subject-fidelity.json) for the stronger subject-fidelity form.
 
 ## Integration
 
-The receipt is plain JSON and can be stored beside an agent trajectory, used as a CI gate, or projected into an evaluation system. It is intentionally runtime-neutral: the events can originate in business applications, browser automation, API agents, durable workflows, or a custom environment.
+The receipt is plain JSON and can be stored beside an agent trajectory, used as a CI gate, or projected into an evaluation system. It is intentionally runtime-neutral: the events can originate in business applications, browser automation, API agents, durable workflows, coding-agent harnesses, local-model runtimes, or a custom environment.
+
+The verifier deliberately separates **the subject being evaluated** from **the machinery doing the evaluation**. That makes it usable for provider-neutral coding-agent traces, context-management experiments, host-model sidecars, distributed workers, and Bonfÿre/Aurekai evidence flows without pretending those systems share one runtime.
 
 ## Commercial use
 
-The CLI is MIT licensed. Bonfyre offers a bounded **Agent Workflow Safety Audit** for teams that want their own trace schema, authority model, effect taxonomy, replay checks, and CI integration mapped into this verifier. The initial audit is offered at **$1,500 USD** for one workflow and one integration target; scope and availability are confirmed before work begins.
+The CLI is MIT licensed. Bonfÿre offers a bounded **Agent Workflow Safety Audit** for teams that want their own trace schema, authority model, effect taxonomy, replay checks, and CI integration mapped into this verifier. The initial audit is offered at **$1,500 USD** for one workflow and one integration target; scope and availability are confirmed before work begins.
 
 Start with the structured [Agent Workflow Safety Audit intake](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/issues/new?template=agent-workflow-safety-audit.yml). Do not include credentials, private traces, customer data, or other sensitive material. The intake confirms fit and scope only; no work or payment is accepted until both sides agree on the delivery boundary.
 
-For environment and RL/evaluation teams, the repository also includes a [synthetic Helpdesk SLA environment](environments/helpdesk_sla/README.md) with deterministic reset, isolated branching, JSON replay, explicit authority/effect boundaries, and the same eight verifier dimensions. A fixed-scope one-workflow environment projection pilot is listed at **$2,500 USD** through the [environment pilot intake](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/issues/new?template=frappe-helpdesk-environment-pilot.yml).
+For environment and RL/evaluation teams, the repository also includes a [synthetic Helpdesk SLA environment](environments/helpdesk_sla/README.md) with deterministic reset, isolated branching, JSON replay, explicit authority/effect boundaries, and the same base verifier dimensions. A fixed-scope one-workflow environment projection pilot is listed at **$2,500 USD** through the [environment pilot intake](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/issues/new?template=frappe-helpdesk-environment-pilot.yml).
 
 ## Limits
 
-This verifier checks declared traces; it does not prove that an event source is truthful. Production deployments should sign receipts, bind event identities to the source system, and preserve append-only evidence.
+This verifier checks declared traces; it does not prove that an event source is truthful. Production deployments should sign receipts, bind event identities to the source system, preserve append-only evidence, and verify that claimed provider/context events are emitted by the runtime boundary they identify.
 
 ## License
 
