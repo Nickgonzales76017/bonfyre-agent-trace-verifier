@@ -79,6 +79,8 @@ Pin the action to a release and pass the repository-relative path to a trace:
 
 The step fails for policy violations or malformed input. It exposes `passed`, `receipt-id`, `trace-digest`, and `receipt-path` outputs for later CI steps. The action invokes the same standard-library verifier and makes no network calls.
 
+Each invocation publishes only its own receipt. If malformed or missing input produces no receipt, `passed` is false and the receipt outputs are empty, even when an earlier run used the same destination. Consume the emitted `receipt-path`; an existing file at a configured path may belong to an earlier run.
+
 ## Trace contract
 
 Each trace declares the task envelope, policy, ordered events, and observed outcomes. Effects are explicit. Review-gated effects need an approved named reviewer. Each action must use an authority grant assigned to its actor. Required evidence is attached to the event that produced it. Failed mutating effects require a later successful compensation event.

@@ -34,20 +34,25 @@ runs:
         BONFYRE_TRACE_PATH: ${{ inputs.trace-path }}
         BONFYRE_RECEIPT_PATH: ${{ inputs.receipt-path }}
       run: |
+        receipt_dir=$(mktemp -d)
+        trap 'rm -rf "$receipt_dir"' EXIT
         set +e
-        python3 "$GITHUB_ACTION_PATH/verifier.py" "$BONFYRE_TRACE_PATH" --output "$BONFYRE_RECEIPT_PATH"
+        python3 "$GITHUB_ACTION_PATH/verifier.py" "$BONFYRE_TRACE_PATH" --output "$receipt_dir/receipt.json"
         verification_status=$?
         set -e
 
-        if [[ -f "$BONFYRE_RECEIPT_PATH" ]]; then
-          python3 - "$BONFYRE_RECEIPT_PATH" "$GITHUB_OUTPUT" <<'PY'
+        if [[ -f "$receipt_dir/receipt.json" ]] && [[ "$verification_status" -eq 0 || "$verification_status" -eq 1 ]]; then
+          python3 - "$receipt_dir/receipt.json" "$BONFYRE_RECEIPT_PATH" "$GITHUB_OUTPUT" <<'PY'
         import json
         import pathlib
         import sys
 
-        receipt_path = pathlib.Path(sys.argv[1])
-        output_path = pathlib.Path(sys.argv[2])
-        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        current_path = pathlib.Path(sys.argv[1])
+        receipt_path = pathlib.Path(sys.argv[2])
+        output_path = pathlib.Path(sys.argv[3])
+        rendered = current_path.read_text(encoding="utf-8")
+        receipt = json.loads(rendered)
+        receipt_path.write_text(rendered, encoding="utf-8")
         with output_path.open("a", encoding="utf-8") as output:
             output.write(f"passed={str(receipt['passed']).lower()}\n")
             output.write(f"receipt-id={receipt['receipt_id']}\n")
