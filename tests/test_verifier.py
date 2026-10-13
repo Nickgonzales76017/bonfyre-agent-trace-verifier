@@ -46,6 +46,32 @@ class VerifierTests(unittest.TestCase):
         trace["task"]["max_steps"] = 4
         self.assertTrue(verify(trace)["dimensions"]["recovery_quality"]["passed"])
 
+    def test_large_trace_duplicate_detection_preserves_sorted_messages_and_identity(self):
+        # Synthetic authorized read events, no customer or provider data.
+        # The previous list.count-in-a-loop duplicate check was O(n^2).
+        trace = self.load("pass.json")
+        seed = trace["events"][0]
+        trace["events"] = [
+            {**seed, "event_id": f"event-{n:05d}", "cost_usd": 0.0}
+            for n in range(8000)
+        ]
+        trace["events"].extend([
+            {**seed, "event_id": "event-06500", "cost_usd": 0.0},
+            {**seed, "event_id": "event-00002", "cost_usd": 0.0},
+            {**seed, "event_id": "event-06500", "cost_usd": 0.0},
+        ])
+        trace["task"]["max_steps"] = len(trace["events"])
+        result = verify(trace)
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["dimensions"]["semantic_consistency"]["details"], [
+            "duplicate event_id: event-00002",
+            "duplicate event_id: event-06500",
+        ])
+        # Hashes describe the original trace, not the verifier's internal
+        # duplicate-detection strategy.
+        self.assertEqual(result["trace_digest_sha256"], self.digest(trace))
+        self.assertEqual(result, verify(copy.deepcopy(trace)))
+
     # --- identity continuity -------------------------------------------
     # A trace digest must not change when only the ENCODING of the content
     # changes. Two runs of the same agent on Windows and on Linux describe
