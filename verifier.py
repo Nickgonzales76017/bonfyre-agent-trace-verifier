@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 import sys
@@ -318,7 +319,10 @@ def verify(trace: Dict[str, Any]) -> Dict[str, Any]:
             semantic_errors.append(f"events[{index}] has no resource")
         if event.get("status") not in VALID_STATUSES:
             semantic_errors.append(f"events[{index}] has invalid status")
-    duplicates = sorted({item for item in event_ids if event_ids.count(item) > 1})
+    # Count once instead of repeatedly scanning the entire trace for every ID.
+    # The sorted duplicate error list and canonical trace/receipt identity stay
+    # byte-for-byte equivalent for all valid string event IDs.
+    duplicates = sorted(item for item, count in Counter(event_ids).items() if count > 1)
     semantic_errors.extend(f"duplicate event_id: {item}" for item in duplicates)
     dimensions["semantic_consistency"] = finding(
         not semantic_errors,
